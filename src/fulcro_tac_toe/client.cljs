@@ -43,7 +43,8 @@
 (defsc Square [this {:square/keys [value] :as props}]
   {:query [:square/id :square/value]
    :ident :square/id}
-  (dom/button :.square {:onClick (fn [] (comp/transact! this [(claim-square props)]))}
+  (dom/button :.square {:aria-label "square button"
+                        :onClick (fn [] (comp/transact! this [(claim-square props)]))}
     value))
 
 (def ui-square (comp/factory Square {:keyfn :square/id}))
