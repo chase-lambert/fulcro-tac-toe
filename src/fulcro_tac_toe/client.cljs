@@ -62,13 +62,15 @@
   {:query [:board/id :board/turn :board/winner {:board/squares (comp/get-query Square)}]
    :ident :board/id}
   (let [[row-1 row-2 row-3] (partition 3 squares)]
-    (comp/fragment
+    (dom/div :.game
+      (dom/div :.welcome-message "Welcome to Fulcro-Tac-Toe!")
       (if winner 
-        (dom/h1 winner " wins!!!")
+        (dom/h1 :.status winner " wins!!!")
         (dom/h3 :.status "Next player is: " turn))
-      (dom/div :.board-row (map ui-square row-1))
-      (dom/div :.board-row (map ui-square row-2))
-      (dom/div :.board-row (map ui-square row-3)))))
+      (dom/div :.board
+        (dom/div :.board-row (map ui-square row-1))
+        (dom/div :.board-row (map ui-square row-2))
+        (dom/div :.board-row (map ui-square row-3))))))
       
 (def ui-board (comp/factory Board {:keyfn :board/id}))
 
