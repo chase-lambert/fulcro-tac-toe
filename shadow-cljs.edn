@@ -1,0 +1,17 @@
+{:deps     {:aliases [:dev]}
+
+ :dev-http {8000 "classpath:public"}
+
+ :nrepl    {:port 9000}
+
+ :builds   {:app {:target     :browser
+                  :output-dir "resources/public/js"
+                  :asset-path "/js"
+                  :dev        {:compiler-options 
+                               {:external-config 
+                                {:fulcro {:html-source-annotations? true}}}}
+                  :modules    {:main {:init-fn fulcro-tac-toe.client/init
+                                      :entries [fulcro-tac-toe.client]}}
+                  :devtools   {:after-load fulcro-tac-toe.client/refresh
+                               :preloads   [com.fulcrologic.fulcro.inspect.preload
+                                            com.fulcrologic.fulcro.inspect.dom-picker-preload]}}}}                            
