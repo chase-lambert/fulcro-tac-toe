@@ -7,8 +7,10 @@
    [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
    [com.fulcrologic.fulcro.react.version18 :refer [with-react18]]))
 
+
 (defonce APP 
   (with-react18 (app/fulcro-app)))
+
 
 (def winning-lines
   [[0 1 2]
@@ -30,6 +32,7 @@
           :when (and d e f (= d e f))]
       d))) 
 
+
 (def initial-board
   #:board{:id 1
           :squares (mapv (fn [n]
@@ -38,6 +41,7 @@
                          (range 9))
           :winner false
           :turn "X"}) 
+
 
 (defmutation claim-square [{:square/keys [id value]}]
   (action [{:keys [state]}]
@@ -48,6 +52,7 @@
             winner       (winner squares)]
           (swap! state assoc-in [:board/id 1 :board/turn] (if (= current-turn "X") "O" "X"))
           (swap! state assoc-in [:board/id 1 :board/winner] winner)))))
+
 
 (defsc Square [this {:square/keys [value] :as props}]
   {:query [:square/id :square/value]
@@ -76,15 +81,10 @@
 
 (defsc Root [_ {:root/keys [board]}]
   {:query [{:root/board (comp/get-query Board)}]
-   :initial-state (fn [_] {:root/board initial-board})}
+   :initial-state (fn [_ _] {:root/board initial-board})}
   (dom/div 
     (ui-board board)))
 
-(comment
-  (app/current-state APP)
-  (app/schedule-render! APP)
-  (comp/get-initial-state Root)
-  ,) 
 
 (defn ^:export init []
   (app/mount! APP Root "app")
@@ -94,4 +94,11 @@
   (app/mount! APP Root "app")
   (comp/refresh-dynamic-queries! APP)
   (js/console.log "Hot reload"))
+
+
+(comment
+  (app/current-state APP)
+  (app/schedule-render! APP)
+  (comp/get-initial-state Root)
+  ,) 
 
