@@ -1,17 +1,18 @@
 (ns fulcro-tac-toe.client
-  (:require 
-    [com.fulcrologic.fulcro.application :as app]
-    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
-    [com.fulcrologic.fulcro.dom :as dom]
-    [com.fulcrologic.fulcro.react.version18 :refer [with-react18]]
-    [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]))
+  (:require
+   [com.fulcrologic.fulcro.algorithms.merge :as merge]
+   [com.fulcrologic.fulcro.application :as app]
+   [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
+   [com.fulcrologic.fulcro.dom :as dom]
+   [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
+   [com.fulcrologic.fulcro.react.version18 :refer [with-react18]]))
 
-(defonce app 
+(defonce APP 
   (with-react18 (app/fulcro-app)))
 
 (comment
-  (keys app)
-  (-> app (::app/state-atom) deref))
+  (keys APP)
+  (-> APP (::app/state-atom) deref))
 
 (def winning-lines
   [[0 1 2]
@@ -32,13 +33,14 @@
           :winner false
           :turn "X"}) 
 
-
 (defmutation claim-square [{:square/keys [id value] :as props}]
   (action [{:keys [state]}]
-    ;; (swap! state assoc-in [:board/squares id :square/value] "X")
-    (println state)))
+    (let [current-turn (get-in (:board/id @state) [1 :board/turn])]
+      (when (nil? value)
+        (swap! state assoc-in [:square/id id :square/value] current-turn)
+        (swap! state assoc-in [:board/id 1 :board/turn] (if (= current-turn "X") "O" "X"))))))
 
-(defsc Square [this {:square/keys [id value] :as props}]
+(defsc Square [this {:square/keys [value] :as props}]
   {:query [:square/id :square/value]
    :ident :square/id}
   (dom/button :.square {:onClick (fn [] (comp/transact! this [(claim-square props)]))}
@@ -46,7 +48,7 @@
 
 (def ui-square (comp/factory Square {:keyfn :square/id}))
 
-(defsc Board [this {:board/keys [id squares winner turn]}]
+(defsc Board [_ {:board/keys [squares winner turn]}]
   {:query [:board/id :board/turn :board/winner {:board/squares (comp/get-query Square)}]
    :ident :board/id}
   (let [[row-1 row-2 row-3] (partition 3 squares)]
@@ -59,22 +61,24 @@
       
 (def ui-board (comp/factory Board {:keyfn :board/id}))
 
-(defsc Root [this {:keys [boards]}]
-  {:query [{:boards (comp/get-query Board)}]}
-  {:initial-state {:boards (vector initial-board)}}
+(defsc Root [_ {:root/keys [board]}]
+  {:query [{:root/board (comp/get-query Board)}]
+   :initial-state (fn [_ _] {:root/board initial-board})}
   (dom/div 
-    (ui-board initial-board))) 
+    (ui-board board)))
 
 (comment
+  (app/current-state APP)
+  (app/schedule-render! APP)
   ,) 
   
 
 (defn ^:export init []
-  (app/mount! app Root "app")
+  (app/mount! APP Root "app")
   (js/console.log "Loaded"))
 
 (defn ^:export refresh []
-  (app/mount! app Root "app")
-  (comp/refresh-dynamic-queries! app)
+  (app/mount! APP Root "app")
+  (comp/refresh-dynamic-queries! APP)
   (js/console.log "Hot reload"))
 
