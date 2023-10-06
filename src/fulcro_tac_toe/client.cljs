@@ -10,10 +10,6 @@
 (defonce APP 
   (with-react18 (app/fulcro-app)))
 
-(comment
-  (keys APP)
-  (-> APP (::app/state-atom) deref))
-
 (def winning-lines
   [[0 1 2]
    [3 4 5]
@@ -24,6 +20,16 @@
    [0 4 8]
    [2 4 6]])
 
+(defn winner [squares]
+  (first
+    (for [[a b c] winning-lines
+          :let [row [(nth squares a) 
+                     (nth squares b) 
+                     (nth squares c)]
+                [d e f] (map :square/value row)]
+          :when (and d e f (= d e f))]
+      d))) 
+
 (def initial-board
   #:board{:id 1
           :squares (mapv (fn [n]
@@ -33,12 +39,15 @@
           :winner false
           :turn "X"}) 
 
-(defmutation claim-square [{:square/keys [id value] :as props}]
+(defmutation claim-square [{:square/keys [id value]}]
   (action [{:keys [state]}]
-    (let [current-turn (get-in (:board/id @state) [1 :board/turn])]
-      (when (nil? value)
-        (swap! state assoc-in [:square/id id :square/value] current-turn)
-        (swap! state assoc-in [:board/id 1 :board/turn] (if (= current-turn "X") "O" "X"))))))
+    (when (nil? value)
+      (let [current-turn (get-in (:board/id @state) [1 :board/turn])
+            _            (swap! state assoc-in [:square/id id :square/value] current-turn)
+            squares      (vals (:square/id @state))
+            winner       (winner squares)]
+          (swap! state assoc-in [:board/id 1 :board/turn] (if (= current-turn "X") "O" "X"))
+          (swap! state assoc-in [:board/id 1 :board/winner] winner)))))
 
 (defsc Square [this {:square/keys [value] :as props}]
   {:query [:square/id :square/value]
@@ -54,8 +63,9 @@
    :ident :board/id}
   (let [[row-1 row-2 row-3] (partition 3 squares)]
     (comp/fragment
-      (dom/h3 :.status "Next player is: " turn)
-      (when winner (dom/h1 "Winner!"))
+      (if winner 
+        (dom/h1 winner " wins!!!")
+        (dom/h3 :.status "Next player is: " turn))
       (dom/div :.board-row (map ui-square row-1))
       (dom/div :.board-row (map ui-square row-2))
       (dom/div :.board-row (map ui-square row-3)))))
@@ -64,15 +74,15 @@
 
 (defsc Root [_ {:root/keys [board]}]
   {:query [{:root/board (comp/get-query Board)}]
-   :initial-state (fn [_ _] {:root/board initial-board})}
+   :initial-state (fn [_] {:root/board initial-board})}
   (dom/div 
     (ui-board board)))
 
 (comment
   (app/current-state APP)
   (app/schedule-render! APP)
+  (comp/get-initial-state Root)
   ,) 
-  
 
 (defn ^:export init []
   (app/mount! APP Root "app")
