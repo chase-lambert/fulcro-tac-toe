@@ -15,7 +15,7 @@ ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 RUN npm install -g yarn
 
 RUN yarn install
-RUN shadow-cljs release app
+RUN npx shadow-cljs release app
 RUN clojure -T:build uber
 
 EXPOSE $PORT
