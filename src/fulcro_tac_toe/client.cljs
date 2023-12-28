@@ -96,7 +96,7 @@
 
 
 (comment
-  (app/current-state APP)
+  (:root/board (app/current-state APP))
   (app/schedule-render! APP)
   (comp/get-initial-state Root)
   ,) 
